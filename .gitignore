@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# .todo FILES (I use them to keep track and debug the project)
+*.todo
+
 # User-specific files
 *.rsuser
 *.suo
