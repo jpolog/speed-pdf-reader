@@ -1,9 +1,4 @@
-from operator import truediv
 import PySimpleGUI as sg
-
-# Text that will be shown
-dummyText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sit amet odio in tortor accumsan tempus. Mauris diam tortor, maximus in porta ac, gravida non arcu. Curabitur feugiat euismod nibh ac sollicitudin. Suspendisse ipsum turpis, congue id aliquam id, sodales at massa. Donec eu erat nec tortor fringilla volutpat in et nisl. Donec pulvinar sapien orci, eu fermentum tellus egestas gravida. Pellentesque vitae dignissim odio, vitae facilisis lorem. Donec aliquam consectetur metus, tempor tincidunt nunc elementum eu. Donec cursus pharetra lorem, eget facilisis tellus pellentesque ac. Vivamus eget ante sed dui placerat euismod. Vestibulum malesuada tellus ac odio posuere rhoncus." 
-testList = dummyText.split(" ")
 
 numWords = 2
 wpm = 450
@@ -23,26 +18,6 @@ def textInWindow():
 
     return sg.Window('RSVP Reader', layout, resizable=True, size=(600, 750))
 
-inputWindow = textInWindow()
-
-while True:
-    event, values = inputWindow.read()
-    if event == 'textInput':
-        break
-    else:
-        wordList = values[0].replace('\n\n','  ').replace('\n','').split(' ')
-        print(wordList)
-        wordCount=len(wordList)
-
-        # Set wpm and numWords values
-        wpm = int(values[1])
-        numWords = int(values[2])
-        pace = (60000/wpm)*numWords
-        inputWindow['timeLeft'].update(str((wordCount-counter)//wpm) + ' min')
-
-
-inputWindow.close()
-
 
 # RSVP text window
 def RSVPWindow():
@@ -60,10 +35,9 @@ def RSVPWindow():
 
     return sg.Window('RSVP Reader', layout, resizable=True, size=(600, 300))
 
-window = RSVPWindow()
 
 # Utilities for buttons and text inputs
-def playPause():
+def playPause(window,values):
     if window['playPause'].get_text() == 'Pause':
         window['playPause'].update('Play')
     else:   # Resume playing
@@ -77,44 +51,78 @@ def playPause():
         pace = (60000/wpm)*numWords
 
 
-# The main loop starts when play button is pressed
-event, values = window.read()
-if event == 'playPause':
-    playPause()
-else:
-    exit()
-while True:
 
-    event, values = window.read(pace)
-    if event == 'playPause':    # Play/Pause
-        playPause()
-        event, values = window.read()
-        if event == 'playPause':
-            playPause()
-            continue
-    if event in (sg.WIN_CLOSED, 'Cancel'):  # Close window
-        break
-    
-    # Shows the chosen number of words at a time
-    # TODO: Check for longer words to show independently (max char)
-    words = ''
-    for i in range(0,numWords):
-        words += wordList[counter] + ' '
-        counter+=1  
-        if counter >= wordCount:    # The text is finished
-            window['playPause'].update('Play')
+
+def main():
+
+    global counter
+
+    # Create the window where text is inserted
+    inputWindow = textInWindow()
+
+    while True:
+        event, values = inputWindow.read()
+        if event == 'textInput':
+            break
+        else:
+            wordList = values[0].replace('\n\n','  ').replace('\n','').split(' ')
+            print(wordList)
+            wordCount=len(wordList)
+
+            # Set wpm and numWords values
+            wpm = int(values[1])
+            numWords = int(values[2])
+            pace = (60000/wpm)*numWords
+            inputWindow['timeLeft'].update(str((wordCount-counter)//wpm) + ' min')
+
+
+    inputWindow.close()
+
+
+    # RSVP window created
+    window = RSVPWindow()
+
+
+    # The main loop starts when play button is pressed
+    event, values = window.read()
+    if event == 'playPause':
+        playPause(window,values)
+    else:
+        exit()
+    while True:
+
+        event, values = window.read(pace)
+        if event == 'playPause':    # Play/Pause
+            playPause(window,values)
             event, values = window.read()
-            if event == 'playPause':    # Play from the beginnig
-                playPause()
+            if event == 'playPause':
+                playPause(window,values)
+                continue
+        if event in (sg.WIN_CLOSED, 'Cancel'):  # Close window
+            break
+        
+        # Shows the chosen number of words at a time
+        # TODO: Check for longer words to show independently (max char)
+        words = ''
+        for i in range(0,numWords):
+            words += wordList[counter] + ' '
+            counter+=1  
+            if counter >= wordCount:    # The text is finished
+                window['playPause'].update('Play')
                 event, values = window.read()
-                if event == 'playPause':
-                    playPause()
-                    continue
-            if event in (sg.WIN_CLOSED, 'Cancel'):  # Close window
-                break
-    window['timeLeft'].update(str((wordCount-counter)//wpm) + ' min')
+                if event == 'playPause':    # Play from the beginnig
+                    playPause(window,values)
+                    event, values = window.read()
+                    if event == 'playPause':
+                        playPause(window,values)
+                        continue
+                if event in (sg.WIN_CLOSED, 'Cancel'):  # Close window
+                    break
+        window['timeLeft'].update(str((wordCount-counter)//wpm) + ' min')
 
-    window['text'].update(words)
+        window['text'].update(words)
         
 
+if __name__ == '__main__':
+    main()
     
